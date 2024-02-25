@@ -1,10 +1,9 @@
 from django.utils import timezone
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from main.models import CustomUser, Farm, Crop, Resource, Person, FarmingDates, FarmingCosts, FarmProduce, FarmVisitRequest, FarmPhoto, FarmVisitReport
+from main.models import CustomUser, Farm, Crop, Payment, Resource, Person, FarmingDates, FarmingCosts, FarmProduce, FarmVisitRequest, FarmPhoto, FarmVisitReport, Scheduler
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import ValidationError
-from django.forms import ModelMultipleChoiceField
 from django.utils.translation import gettext_lazy as _
 
 
@@ -489,4 +488,22 @@ class FarmVisitReportForm(forms.ModelForm):
         # Add custom validation for the report field if needed
         return report
     
-    
+
+
+class SchedulerForm(forms.ModelForm):
+    class Meta:
+        model = Scheduler
+        fields = ['worker_name', 'start_date', 'end_date', 'task']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(SchedulerForm, self).__init__(*args, **kwargs)
+        self.fields['worker_name'].queryset = Person.objects.filter(casual_labourer=True)
+
+class PaymentForm(forms.ModelForm):
+    class Meta:
+        model = Payment
+        fields = ['invoice', 'payment_method', 'amount_paid']

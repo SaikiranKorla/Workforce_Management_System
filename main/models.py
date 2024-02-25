@@ -257,3 +257,28 @@ class Reply(models.Model):
 class ProcessedMessage(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     processed_message_ids = models.JSONField(default=list)
+
+class Scheduler(models.Model):
+    worker_name = models.ForeignKey(Person, on_delete=models.CASCADE)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    task = models.TextField()
+
+    def __str__(self):
+        return f"{self.worker_name} - {self.task}"
+    
+class Invoice(models.Model):
+    customer = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    invoice_number = models.CharField(max_length=255)
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_service_provided = models.DateField()
+    amount_charged = models.DecimalField(max_digits=10, decimal_places=2)
+    vat_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    total_amount_due = models.DecimalField(max_digits=10, decimal_places=2)
+    terms_and_conditions = models.TextField()
+
+class Payment(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    payment_method = models.CharField(max_length=255)
+    date_paid = models.DateTimeField(auto_now_add=True)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)

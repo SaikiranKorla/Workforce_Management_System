@@ -1,16 +1,18 @@
+from sched import scheduler
 from django.db.models import Q, Max
+from django.forms import model_to_dict
 from django.http import HttpResponse, JsonResponse
 import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.views import LoginView
-from .forms import RegisterForm, LoginForm, CustomUserUpdateForm, FarmForm, PersonForm, RegisterForm, FarmPhotoForm
+from .forms import PaymentForm, RegisterForm, LoginForm, CustomUserUpdateForm, FarmForm, PersonForm, RegisterForm, FarmPhotoForm, SchedulerForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.views import LogoutView
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.generic.edit import FormView
-from .models import Farm, Person, FarmingDates, FarmingCosts, FarmProduce, Resource, FarmVisitRequest, Message, Reply, FarmVisitReport
+from .models import Farm, Payment, Person, FarmingDates, FarmingCosts, FarmProduce, Resource, FarmVisitRequest, Message, Reply, FarmVisitReport, Scheduler
 from .forms import FarmForm,  PersonForm, FarmingDatesForm, FarmingCostsForm,FarmProduceForm, ResourceForm, FarmVisitRequestForm, SearchForm, MessageForm, FarmVisitReportForm
 from django.contrib.auth.models import Group
 from django.utils import timezone as time_zone
@@ -481,18 +483,14 @@ def farm_resources(request, farm_id):
 @user_passes_test(lambda u: u.groups.filter(name__in=['farmer', 'field_agent']).exists())
 @login_required(login_url="/login")
 def farm_workers(request, farm_id):
-    farm = get_object_or_404(Farm, id=farm_id)
-
+    farm = get_object_or_404(Farm, id=farm_id) # Retrieve all workers for this farm
     user = request.user
     is_field_agent = user.groups.filter(name='field_agent').exists()
-    # Check if workers exist for the farm
-  
     farm_labourer_exist = farm.farm_labourers.exists()
     farm_staff_exist = farm.staff_contacts.exists()
-   
     farm_labourer_queryset = farm.farm_labourers.order_by('-created')
     farm_staff_queryset = farm.staff_contacts.order_by('-created')
-
+    
     context = {
         'farm': farm,
         'farm_id': farm_id,
@@ -500,10 +498,89 @@ def farm_workers(request, farm_id):
         'farm_staff_exist': farm_staff_exist,
         'farm_labourer_queryset': farm_labourer_queryset,
         'farm_staff_queryset': farm_staff_queryset,
-        'is_field_agent': is_field_agent
+        'is_field_agent': is_field_agent,
     }
 
     return render(request, 'main/farm_workers.html', context)
+
+@login_required(login_url="/login")
+def scheduler(request, farm_id):
+    farm = get_object_or_404(Farm, id=farm_id)
+    farm_labourer_queryset = farm.farm_labourers.order_by('-created')
+    
+    if request.method == 'POST':
+        
+        form = SchedulerForm(request.POST)
+        if form.is_valid(): 
+            
+            # Save the form data to the Scheduler model
+            
+            worker_name_id = request.POST['worker_name']
+            form.save()
+            request.session['worker_name_id'] = worker_name_id
+            return redirect(reverse('workers_data', kwargs={'farm_id': farm_id, 'worker_name_id': worker_name_id}))
+    else:
+        form = SchedulerForm(initial={'worker_name': farm_labourer_queryset.first()})
+
+    context = {
+        'farm': farm,
+        'farm_id': farm_id,
+        'form': form,
+    }
+
+    return render(request, 'main/scheduler.html', context)
+
+@user_passes_test(lambda u: u.groups.filter(name__in=['farmer', 'field_agent']).exists())
+@login_required(login_url="/login")
+def workers_data(request, farm_id,worker_name_id):
+    farm = get_object_or_404(Farm, id=farm_id) # Retrieve all workers for this farm
+    user = request.user
+    is_field_agent = user.groups.filter(name='field_agent').exists()
+    farm_labourer_exist = farm.farm_labourers.exists()
+    farm_staff_exist = farm.staff_contacts.exists()
+    farm_labourer_queryset = farm.farm_labourers.order_by('-created')
+    farm_staff_queryset = farm.staff_contacts.order_by('-created')
+    casual_labourers = Person.objects.filter(casual_labourer=True)
+    print(casual_labourers)
+    # scheduler = Scheduler.objects.filter(worker_name_id=worker_name_id).first()
+    scheduler = Scheduler.objects.filter(worker_name_id=worker_name_id).last()
+    print(scheduler)
+    # Get the worker name from the scheduler object
+    worker_name = scheduler.worker_name
+    startdate = scheduler.start_date
+    enddate=scheduler.end_date
+    task=scheduler.task
+    worker_data=[]
+    worker_data.append(worker_name)
+    
+    print("worker_data",worker_data)
+    # print(f"worker_name: '{worker_name}'")
+    # for person in casual_labourers:
+    #     print(f"person.name: '{person.name}'")
+    #     if str(person.name).strip().replace(' ', '') == str(worker_name).strip().replace(' ', ''):
+    #         print(person)
+    #         workers.append(worker_name)
+    #         break
+    # else:
+    #     print("No matching casual labourer found")
+    # print("workers",workers)
+    # schedule_details=[worker_name,startdate,enddate,task]
+    context = {
+        'farm': farm,
+        'farm_id': farm_id,
+        'farm_labourer_exist': farm_labourer_exist,
+        'farm_staff_exist': farm_staff_exist,
+        'farm_labourer_queryset': farm_labourer_queryset,
+        'farm_staff_queryset': farm_staff_queryset,
+        'is_field_agent': is_field_agent,
+        'worker_data':worker_data,
+        'startdate':startdate,
+        'enddate':enddate,
+        'task':task,
+        'workers' : worker_data
+        }
+
+    return render(request, 'main/workers_data.html', context)
 
 @user_passes_test(lambda u: u.groups.filter(name__in=['farmer', 'field_agent']).exists())
 @login_required(login_url="/login")
@@ -679,4 +756,27 @@ def training(request):
     return render(request, 'main/training.html') 
 
 
+def payment_create(request):
+    if request.method == 'POST':
+        form = PaymentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('payment_list')
+    else:
+        form = PaymentForm()
+    return render(request, 'main/payment_create.html', {'form': form})
 
+def payment_update(request, pk):
+    payment = Payment.objects.get(pk=pk)
+    if request.method == 'POST':
+        form = PaymentForm(request.POST, instance=payment)
+        if form.is_valid():
+            form.save()
+            return redirect('payment_list')
+    else:
+        form = PaymentForm(instance=payment)
+    return render(request, 'main/payment_update.html', {'form': form})
+
+def payment_list(request):
+    payments = Payment.objects.all()
+    return render(request, 'main/payment_list.html', {'payments': payments})

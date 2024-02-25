@@ -35,6 +35,8 @@ urlpatterns = [
     path('farm_details/<int:farm_id>/create_resource/', views.create_resource, name='create_resource'),
     path('farm_resources/<int:farm_id>/', views.farm_resources, name='farm_resources'),
     path('farm_workers/<int:farm_id>/', views.farm_workers, name='farm_workers'),
+    path('scheduler/<int:farm_id>/', views.scheduler, name='scheduler'),
+    path('workers_data/<int:farm_id>/<int:worker_name_id>/', views.workers_data, name='workers_data'),
     path('farm_activities/<int:farm_id>/', views.farm_activities, name='farm_activities'),
     path('farm/<int:farm_id>/farm_photos/', views.farm_photos, name='farm_photos'),
     path('get_image_names/', views.get_image_names, name='get_image_names'),
@@ -49,4 +51,7 @@ urlpatterns = [
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),
     path('reset_password_complete', auth_views.PasswordResetCompleteView.as_view(template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
  # Include media URLs
+    path('payment/create/', views.payment_create, name='payment_create'),
+    path('payment/update/<int:pk>/', views.payment_update, name='payment_update'),
+    path('payment/list/', views.payment_list, name='payment_list'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

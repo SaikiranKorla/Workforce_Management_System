@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Person, Farm, Crop, Resource, FarmingDates,FarmingCosts, FarmProduce, FarmVisitRequest, Message, FarmVisitReport, Reply
+from .models import CustomUser, Payment, Person, Farm, Crop, Resource, FarmingDates,FarmingCosts, FarmProduce, FarmVisitRequest, Message, FarmVisitReport, Reply
 from django.contrib.auth.admin import UserAdmin
 from django.contrib import admin
 from datetime import date
@@ -109,4 +109,6 @@ class FarmVisitRequestAdmin(CreatedDateFilterAdminMixin):
 class FarmVisitReportAdmin(CreatedDateFilterAdminMixin):
     pass
 
-
+@admin.register(Payment)
+class PaymentAdmin(CreatedDateFilterAdminMixin):
+    pass

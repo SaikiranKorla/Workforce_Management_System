@@ -48,7 +48,9 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'fontawesomefree',
     'channels',
-    'channels_redis'
+    'channels_redis',
+    'debug_toolbar',
+    'widget_tweaks',
 ]
 
 ASGI_APPLICATION = "farm_management_web.routing.application"
@@ -74,6 +76,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     # 'channels.middleware.WebSocketMiddleware'
 ]
 
@@ -93,6 +96,19 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'main/static'),
+    os.path.join(BASE_DIR, 'static/widget_tweaks'),
+    os.path.join(BASE_DIR, 'static/vendor/jquery-ui'),
+    os.path.join(BASE_DIR, 'static/vendor/bootstrap'),
+    os.path.join(BASE_DIR, 'static/vendor/bootstrap-select'),
+    os.path.join(BASE_DIR, 'static/vendor/bootstrap-table'),
+    os.path.join(BASE_DIR, 'static/vendor/flatpickr'),
+    os.path.join(BASE_DIR, 'static/vendor/font-awesome'),
+    os.path.join(BASE_DIR, 'static/vendor/jquery-confirm'),
+    os.path.join(BASE_DIR, 'static/vendor/malihu-custom-scrollbar-plugin'),
 ]
 
 WSGI_APPLICATION = 'farm_management_web.wsgi.application'
