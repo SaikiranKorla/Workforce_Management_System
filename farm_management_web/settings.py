@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'channels_redis',
     'debug_toolbar',
     'widget_tweaks',
+    'appointment.apps.AppointmentConfig',
+    'django_q',
 ]
 
 ASGI_APPLICATION = "farm_management_web.routing.application"
@@ -216,4 +218,14 @@ LOGGING = {
             'level': 'DEBUG',
         },
     },
+}
+
+Q_CLUSTER = {
+    'name': 'DjangORM',
+    'workers': 4,
+    'timeout': 90,
+    'retry': 120,
+    'queue_limit': 50,
+    'bulk': 10,
+    'orm': 'default',
 }
